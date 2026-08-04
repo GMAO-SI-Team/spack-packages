@@ -46,6 +46,13 @@ class Nvtx(Package, PythonExtension):
         setup = FileFilter("python/setup.py")
         setup.filter("include_dirs=include_dirs", f"include_dirs=['{include_dir}']", string=True)
 
+    def flag_handler(self, name, flags):
+        # NVTX 3.2+ enables C23 char8_t support with GCC 15, but the SLES 15
+        # system <uchar.h> does not provide char8_t.
+        if name == "cflags" and self.spec.satisfies("@3.2: %gcc@15:"):
+            flags.append("-std=gnu17")
+        return (flags, None, None)
+
     def install(self, spec, prefix):
         install_tree("c/include", prefix.include)
         install("c/CMakeLists.txt", prefix)

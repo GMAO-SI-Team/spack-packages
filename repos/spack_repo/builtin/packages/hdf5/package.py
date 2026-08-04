@@ -255,6 +255,14 @@ class Hdf5(CMakePackage):
     # Fix Apple linker flags (-current_version and -compatibility_version) when building with NAG compiler
     patch("nag_macos_linker.patch", when="@1.12.0:1.14.99 %nag platform=darwin")
 
+    # CMake's preferred pthread compiler flag is not accepted by NAG on Linux.
+    # Use the pthread linker library instead.
+    patch("nag_linux_threads.patch", when="@2.1.0 %nag platform=linux")
+
+    # OpenMPI with NAG installs mpi.mod in its library directory, which HDF5's
+    # high-level Fortran targets do not otherwise include.
+    patch("nag_hl_fortran_mpi_module.patch", when="@2.1.0 %nag platform=linux")
+
     # There are known build failures with intel@18.0.1. This issue is
     # discussed and patch is provided at
     # https://software.intel.com/en-us/forums/intel-fortran-compiler-for-linux-and-mac-os-x/topic/747951.
@@ -628,6 +636,10 @@ class Hdf5(CMakePackage):
         # AOCC does not support _Float16
         if spec.satisfies("@1.14.4: %aocc"):
             args.append(self.define("HDF5_ENABLE_NONSTANDARD_FEATURE_FLOAT16", False))
+
+        if spec.satisfies("%nag"):
+            # NAG cannot pass Spack's padded build rpath through its linker.
+            args.append(self.define("CMAKE_SKIP_RPATH", True))
 
         return args
 

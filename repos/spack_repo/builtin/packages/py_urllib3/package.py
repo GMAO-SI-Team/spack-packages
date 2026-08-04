@@ -47,7 +47,7 @@ class PyUrllib3(PythonPackage):
     depends_on("py-hatchling@1.6:1", when="@2:", type="build")
     depends_on("py-hatch-vcs@0.4:0.5", when="@2.5:", type="build")
     depends_on("py-hatch-vcs@0.4", when="@2.3:2.4", type="build")
-    depends_on("py-setuptools-scm@8", when="@2.5:", type="build")
+    depends_on("py-setuptools-scm@8:9", when="@2.5:", type="build")
 
     with when("+brotli"):
         depends_on("py-brotli@1.2:", when="@2.6:", type=("build", "run"))

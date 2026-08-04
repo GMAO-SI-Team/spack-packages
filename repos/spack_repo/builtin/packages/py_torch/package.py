@@ -206,7 +206,7 @@ class PyTorch(PythonPackage, CudaPackage, ROCmPackage):
 
         # pyproject.toml
         depends_on("py-setuptools@70.1:81", when="@2.10:")
-        depends_on("py-setuptools@70.1:79", when="@2.9:")
+        depends_on("py-setuptools@70.1:79", when="@2.9")
         depends_on("py-setuptools@62.3:79", when="@2.8")
         depends_on("py-setuptools@:79", when="@:2.7")
         depends_on("py-numpy")
@@ -593,6 +593,16 @@ class PyTorch(PythonPackage, CudaPackage, ROCmPackage):
         working_dir="third_party/fbgemm",
     )
 
+    # Make PyTorch builds work in air-gapped environments. This forwards the
+    # Spack py-six source path through NNPACK to PeachPy instead of fetching it.
+    # PyTorch 2.12 changed its environment forwarding mechanism.
+    patch("air_gapped_nnpack_cmake.patch", when="@2.12:")
+
+    # Backport the generic environment forwarding fix from PyTorch PR 188242.
+    # PyTorch 2.12--2.13 parse the entire environment as a CMake list, which
+    # can lose USE_* selections when unrelated values contain semicolons.
+    patch("envvar-forwarding-188242.patch", when="@2.12:2.13")
+
     def patch(self):
         # https://github.com/pytorch/pytorch/issues/52208
         filter_file(
@@ -742,6 +752,13 @@ class PyTorch(PythonPackage, CudaPackage, ROCmPackage):
 
         # cmake/External/nnpack.cmake
         enable_or_disable("nnpack")
+        if "+nnpack" in self.spec and "py-six" in self.spec:
+            # NNPACK/PeachPy wires this path into PYTHONPATH for code generation.
+            # Point it at Spack's installed py-six to avoid network fetches.
+            env.set(
+                "PYTHON_SIX_SOURCE_DIR",
+                self["py-six"].module.python_purelib,
+            )
 
         enable_or_disable("numa")
         if "+numa" in self.spec:
@@ -791,7 +808,7 @@ class PyTorch(PythonPackage, CudaPackage, ROCmPackage):
         elif self.spec["blas"].name == "intel-oneapi-mkl":
             env.set("BLAS", "MKL")
             env.set("WITH_BLAS", "mkl")
-            env.set("INTEL_MKL_DIR", self.spec["mkl"].prefix.mkl.latest)
+            env.set("INTEL_MKL_DIR", self.spec["intel-oneapi-mkl"].prefix.mkl.latest)
         elif self.spec["blas"].name == "openblas":
             env.set("BLAS", "OpenBLAS")
             env.set("WITH_BLAS", "open")

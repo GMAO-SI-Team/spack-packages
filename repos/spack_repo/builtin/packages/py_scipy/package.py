@@ -193,6 +193,9 @@ class PyScipy(PythonPackage):
         when="@1.8.0:1.14.0",
     )
 
+    # NAG forwards this GNU linker flag to GCC without its -Wl prefix.
+    patch("nag_disable_version_script.patch", when="@1.17: %nag")
+
     @property
     def archive_files(self):
         return [join_path(self.stage.source_path, "build", "meson-logs", "meson-log.txt")]
@@ -239,7 +242,7 @@ class PyScipy(PythonPackage):
             blas = blas.replace("ilp64", "lp64")
             lapack = lapack.replace("ilp64", "lp64")
 
-        if spec.satisfies("%aocc") or spec.satisfies("%clang@18:"):
+        if spec.satisfies("%aocc") or spec.satisfies("%clang@18:") or spec.satisfies("%nag"):
             fortran_std = "none"
         else:
             fortran_std = "legacy"
