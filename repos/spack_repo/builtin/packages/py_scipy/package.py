@@ -181,9 +181,9 @@ class PyScipy(PythonPackage):
     #         |          ^~~~~~~~~~~
     #   compilation terminated.
     # See also: https://github.com/macports/macports-ports/commit/d45376ea224ffa9184c6a0ecbcbdf024ee447f12
-    patch("use_stdc_no_threads.patch", when="platform=darwin %gcc")
+    patch("use_stdc_no_threads.patch", when="@:1.8 platform=darwin %gcc")
     # Additional changes needed for scipy-1.8.0
-    patch("use_stdc_no_threads_scipy180_addon.patch", when="@1.8: platform=darwin %gcc")
+    patch("use_stdc_no_threads_scipy180_addon.patch", when="@1.8:1.8 platform=darwin %gcc")
     # *DH
 
     # https://github.com/scipy/scipy/issues/21884
