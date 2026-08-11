@@ -730,7 +730,7 @@ class Python(Package):
                 )
             )
 
-        if self.version >= Version("3.12.0") and sys.platform == "darwin":
+        if self.version >= Version("3.12.0") and sys.platform == "darwin" and "ncurses" in spec:
             config_args.append("CURSES_LIBS={0}".format(spec["ncurses"].libs.link_flags))
 
         return config_args

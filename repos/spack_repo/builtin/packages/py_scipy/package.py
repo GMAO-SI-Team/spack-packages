@@ -194,7 +194,7 @@ class PyScipy(PythonPackage):
     )
 
     # NAG forwards this GNU linker flag to GCC without its -Wl prefix.
-    patch("nag_disable_version_script.patch", when="@1.17: %nag")
+    patch("nag_disable_version_script.patch", when="@1.17:1 %nag")
 
     @property
     def archive_files(self):
