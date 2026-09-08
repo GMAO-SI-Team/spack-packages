@@ -44,7 +44,9 @@ class Scotch(CMakePackage, MakefilePackage):
     version("6.0.0", sha256="8206127d038bda868dda5c5a7f60ef8224f2e368298fbb01bf13fa250e378dd4")
     version("5.1.10b", sha256="54c9e7fafefd49d8b2017d179d4f11a655abe10365961583baaddc4eeb6a9add")
 
-    build_system(conditional("cmake", when="@7:"), "makefile", default="cmake")
+    build_system("cmake", conditional("makefile", when="@:6"), default="cmake")
+    conflicts("build_system=makefile", when="%oneapi")
+
     variant("threads", default=True, description="use POSIX Pthreads within Scotch and PT-Scotch")
     variant(
         "mpi_thread",
@@ -182,6 +184,12 @@ class CMakeBuilder(cmake.CMakeBuilder):
             c_flags.append("-DIDXSIZE64")
             c_flags.append("-DINTSIZE32")
             args.append(self.define("CMAKE_C_FLAGS", " ".join(c_flags)))
+
+        # oneapi C and Fortran compilers aggressively optimize floating point exception checks
+        if self.spec.satisfies("%oneapi@2023:"):
+            fcflags = "-fp-model=precise -fp-speculation=safe"
+            args.extend(["-DCMAKE_Fortran_FLAGS=%s" % fcflags])
+            args.extend(["-DCMAKE_C_FLAGS=%s" % fcflags])
 
         return args
 
