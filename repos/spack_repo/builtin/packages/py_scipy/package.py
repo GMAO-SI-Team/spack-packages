@@ -221,13 +221,6 @@ class PyScipy(PythonPackage):
         # https://github.com/scipy/scipy/issues/9080
         env.set("F90", spack_fc)
 
-        if self.spec.satisfies("platform=darwin %fortran=clang"):
-            # Meson forwards Python's macOS extension-module linker flag to
-            # Flang. It must be passed through the compiler driver's linker
-            # wrapper rather than directly to the driver.
-            env.remove_flags("LDSHARED", "-bundle")
-            env.append_flags("LDSHARED", "-Wl,-bundle")
-
         # https://github.com/scipy/scipy/issues/14935
         # Newer pythran versions 0.12+ work with newer Intel compilers only for py-scipy.
         # Tested to work: intel@2022.0.1; tested to not work: 19.1.1.217; in between unknown

@@ -555,12 +555,14 @@ class Hdf5(CMakePackage):
         env.set("SZIP_INSTALL", self.spec["szip"].prefix)
 
     @run_before("cmake")
-    def fix_darwin_flang_link_flags(self):
-        if not self.spec.satisfies("@2.0.0: platform=darwin %fortran=clang"):
+    def fix_darwin_fortran_link_flags(self):
+        if not self.spec.satisfies("@2.0.0: platform=darwin") or not (
+            self.spec.satisfies("%fortran=clang") or self.spec.satisfies("%fortran=nag")
+        ):
             return
 
         # HDF5 uses CMake's C linker flag variables for version flags on all
-        # targets. Forward them explicitly so Flang passes them to ld.
+        # targets. Forward them explicitly so Flang and NAG pass them to ld.
         filter_file(
             'LINK_FLAGS "${CMAKE_C_OSX_CURRENT_VERSION_FLAG}${PACKAGE_CURRENT} ${CMAKE_C_OSX_COMPATIBILITY_VERSION_FLAG}${PACKAGE_COMPATIBILITY}"',
             'LINK_FLAGS "-Wl,-current_version -Wl,${PACKAGE_CURRENT} -Wl,-compatibility_version -Wl,${PACKAGE_COMPATIBILITY}"',
@@ -670,9 +672,14 @@ class Hdf5(CMakePackage):
                     "-Xlinker -install_name -Xlinker ",
                 )
             )
+
+        if spec.satisfies("@2.0.0: platform=darwin +mpi +fortran") and (
+            spec.satisfies("%fortran=clang") or spec.satisfies("%fortran=nag")
+        ):
             # HDF5's nested Fortran project loses the OpenMPI module directory
             # discovered by FindMPI, so its generated modules cannot resolve
-            # mpi_f08.mod while building the high-level Fortran library.
+            # mpi_f08.mod (Flang) or mpi.mod (NAG) while building the high-level
+            # Fortran library.
             args.append(
                 self.define(
                     "MPI_Fortran_INCLUDE_DIRS",
